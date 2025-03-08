@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.conf import settings
+import threading
 from django.shortcuts import render, redirect
 from .models import Testimonial, SocialMedia, WorkingHours, Banner, OurContact, Partner, TeamMember, NewsLetter, ContactUs
 
@@ -16,7 +17,6 @@ def index(request):
         'working_hours': working_hours,
     }
     return render(request, 'index.html', context)
-
 
 def about_us(request):
     working_hours = WorkingHours.objects.first()
@@ -52,10 +52,23 @@ def newsletter(request):
     
     return render(request, request.path)
 
-def contact_us(request):
+def send_email_in_thread(name, email, message):
+    html = render_to_string('email.html', {
+        'name': name,
+        'message': message
+    })
     
-    return render(request, 'contact_us.html' )
-
+    email = EmailMessage(
+        subject='We have received your message',
+        body=html,
+        from_email='"Hapa254 Kenya Ltd" <{}>'.format(settings.EMAIL_HOST_USER),
+        to=[email],
+    )
+    
+    email.content_subtype = "html"
+    email.send(fail_silently=False)
+    print('Email sent')
+    
 def contact_us(request):
     our_contact = OurContact.objects.first()
     working_hours = WorkingHours.objects.first()
@@ -74,22 +87,14 @@ def contact_us(request):
             subject=subject,            
             message=message,
         )
-        html = render_to_string('email.html', {
-            'name': name,
-            'message': message
-        })
-        
-        email = EmailMessage(
-            subject='We have received your message',
-            body=html,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[email],
+
+        # Send the email in a separate thread, Page reloads, email sends in background
+        email_thread = threading.Thread(
+            target=send_email_in_thread,
+            args=(name, email, message)
         )
-        
-        email.content_subtype = "html"
-        
-        email.send(fail_silently=False)
-        
+        email_thread.start()
+                
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
     
     context = {

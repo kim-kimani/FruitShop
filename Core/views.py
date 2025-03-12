@@ -11,10 +11,12 @@ from .models import Testimonial, SocialMedia, WorkingHours, Banner, OurContact, 
 def index(request):
     our_contact = OurContact.objects.first()
     working_hours = WorkingHours.objects.first()
+    testimonials = Testimonial.objects.filter(is_active=True).order_by('-created_at')
     
     context = {
         'our_contact': our_contact,
         'working_hours': working_hours,
+        'testimonials': testimonials
     }
     return render(request, 'index.html', context)
 

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+
+<div class="breadcrumb-section breadcrumb-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2 text-center">
+                <div class="breadcrumb-text">
+                    <p>Fresh and Organic</p>
+                    <h1>Cart</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cart-section mt-150 mb-150">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-12">
+                <div class="cart-table-wrap">
+                    <table class="cart-table">
+                        <thead class="cart-table-head">
+                            <tr class="table-head-row">
+                                <th class="product-remove"></th>
+                                <th class="product-image">Product Image</th>
+                                <th class="product-name">Name</th>
+                                <th class="product-price">Price</th>
+                                <th class="product-quantity">Quantity</th>
+                                <th class="product-total">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product_id, item in cart.items %}
+                            <tr class="table-body-row">
+                                <td class="product-remove">
+                                    <a href="{% url 'remove_from_cart' product_id %}" style="color: red;">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </a>
+                                </td>
+                                <td class="product-image"><img src="{{ item.image }}" alt="{{ item.name }}"></td>
+                                <td class="product-name">{{ item.name }}</td>
+                                <td class="product-price">Ksh {{ item.price }}</td>
+                                <td class="product-quantity">
+                                    <div class="quantity-control">
+                                        <button class="decrease-btn" data-product-id="{{ product_id }}" style="color: #F28123;">
+                                            <i class="fa-solid fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="quantity-input" id="quantity-{{ product_id }}" value="{{ item.quantity }}" min="1" readonly>
+                                        <button class="increase-btn" data-product-id="{{ product_id }}" style="color: #28a745;">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="product-total">
+                                    <span id="total-price-{{ product_id }}">Ksh {{ item.total_price }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="total-section">
+                    <table class="total-table">
+                        <thead class="total-table-head">
+                            <tr class="table-total-row">
+                                <th>Total</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="total-data">
+                                <td><strong>Subtotal: </strong></td>
+                                <td id="cart-subtotal">Ksh {{ subtotal }}</td>
+                            </tr>
+                            <tr class="total-data">
+                                <td><strong>Shipping: </strong></td>
+                                <td>Ksh 45</td>
+                            </tr>
+                            <tr class="total-data">
+                                <td><strong>Total: </strong></td>
+                                <td id="cart-total">Ksh {{ total }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="cart-buttons">
+                        <a href="{% url 'checkout' %}" class="boxed-btn black">Check Out</a>
+                    </div>
+                </div>
+
+                <div class="coupon-section">
+                    <h3>Apply Coupon</h3>
+                    <div class="coupon-form-wrap">
+                        <form action="index.html">
+                            <p><input type="text" placeholder="Coupon"></p>
+                            <p><input type="submit" value="Apply"></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function updateCart(productId, action) {
+            fetch("{% url 'update_cart' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ product_id: productId, action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`quantity-${productId}`).value = data.new_quantity;
+                    document.getElementById(`total-price-${productId}`).innerText = `Ksh ${data.total_price}`;
+                    document.getElementById("cart-subtotal").innerText = `Ksh ${data.subtotal}`;
+                    document.getElementById("cart-total").innerText = `Ksh ${data.total}`;
+                }
+            });
+        }
+    
+        document.querySelectorAll(".increase-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let productId = this.getAttribute("data-product-id");
+                updateCart(productId, "increase");
+            });
+        });
+    
+        document.querySelectorAll(".decrease-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let productId = this.getAttribute("data-product-id");
+                updateCart(productId, "decrease");
+            });
+        });
+    });
+</script>
+
+{% endblock %}

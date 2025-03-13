@@ -128,17 +128,8 @@ def checkout(request):
     }
 
     if request.method == 'POST':
-        phone_number = request.POST.get('phone')
-        if phone_number:
-            consumer_key = "35im46KRmbipxDiUX37GRnxj9oJlW3Lqf9GBAPiE2VMzyAWU"
-            consumer_secret = "2SqmH7TQ7nRTkGbfv5mR0KeyMYUFd2QO0H5AWetNzvbB0T8AW7Rwuy2Ui9nzGtSn"
-            access_token = get_access_token(consumer_key, consumer_secret)
-            stk_response = stk_push(phone_number, total, access_token)
-            # Handle the STK push response
-            return redirect('index')
+        # Handle form submission for placing the order
+        # You can add order processing logic here
+        return redirect('order_success')  # Redirect to a success page after placing the order
 
     return render(request, 'shop/checkout.html', context)
-
-
-
-
